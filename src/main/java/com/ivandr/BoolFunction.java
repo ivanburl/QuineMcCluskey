@@ -9,7 +9,7 @@ public class BoolFunction {
     private CharacterIterator it;
     private final String expr;
     private Expression compiledResult;
-    private HashMap<Character,Integer> arguments;
+    private final HashMap<Character,Integer> arguments;
     private int binaryRepresentation;
 
     public BoolFunction(String expression) {
@@ -70,7 +70,10 @@ public class BoolFunction {
 
     private Expression parseTerm() {
         Expression x;
-        if (accept('!')) x = ( () -> !(parseTerm().eval()));
+        if (accept('!')) {
+            Expression b = parseTerm();
+            x = ( () -> !(b.eval()));
+        }
         else if (accept('(')) {
             x = parseExpression();
             if (!accept(')'))
@@ -86,7 +89,7 @@ public class BoolFunction {
         else {
             //System.out.println(it.current()+" "+argumentParser.toString() + " "+argumentParser.get(it.current()));
             char tmp = it.current();
-            x = ( () -> ((1 << arguments.get(tmp)) & binaryRepresentation) != 0);
+            x = ( () -> ((1 << (arguments.size() - arguments.get(tmp) - 1)) & binaryRepresentation) != 0);
 
             it.next();
         }
@@ -95,13 +98,21 @@ public class BoolFunction {
     }
 
     private void getAllArguments() {
+        int cnt = 0;
         for (int i=0;i<expr.length();i++) {
-            if (expr.charAt(i) >= 'a' && expr.charAt(i) <= 'z') arguments.put(expr.charAt(i), arguments.size());
+            if (expr.charAt(i) >= 'a' && expr.charAt(i) <= 'z')
+            {
+                if (!arguments.containsKey(expr.charAt(i))) arguments.put(expr.charAt(i),arguments.size());
+            }
         }
     }
 
     public int getNumberOfArguments() {
-        return expr.length();
+        return arguments.size();
+    }
+
+    public HashMap<Character,Integer> getArguments() {
+        return arguments;
     }
 
     @FunctionalInterface
